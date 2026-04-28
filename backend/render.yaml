@@ -1,0 +1,14 @@
+# render.yaml — Render.com deployment config for FastAPI backend
+# Docs: https://render.com/docs/yaml-spec
+
+services:
+  - type: web
+    name: nihongo-api
+    runtime: python
+    region: singapore          # closest to India; change to 'ohio' for US
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.10.0"
