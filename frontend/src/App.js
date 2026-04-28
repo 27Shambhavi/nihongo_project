@@ -10,7 +10,7 @@ import FuriganaReader from './components/FuriganaReader';
 import DailyKanji     from './components/DailyKanji';
 import Quiz           from './components/Quiz';
 
-const API = 'http://localhost:8000';
+const API = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const TABS = [
   { id: 'ocr',      label: 'OCR',       icon: '🖼️', title: 'Image OCR',           subtitle: 'Extract text from images' },
@@ -26,11 +26,27 @@ export default function App() {
   const [tab, setTab]           = useState('ocr');
   const [apiStatus, setStatus]  = useState('checking');
 
-  // ── Health check ──────────────────────────────────────────────────────────
+  // ── Health check with retry (handles Render cold-start) ────────────────────
   useEffect(() => {
-    fetch(`${API}/`)
-      .then(r => r.ok ? setStatus('online') : setStatus('offline'))
-      .catch(() => setStatus('offline'));
+    let cancelled = false;
+    let timer;
+
+    const check = () => {
+      fetch(`${API}/`, { signal: AbortSignal.timeout?.(8000) })
+        .then(r => {
+          if (cancelled) return;
+          if (r.ok) setStatus('online');
+          else { setStatus('offline'); timer = setTimeout(check, 12000); }
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setStatus('offline');
+          timer = setTimeout(check, 12000); // retry every 12s until awake
+        });
+    };
+
+    check();
+    return () => { cancelled = true; clearTimeout(timer); };
   }, []);
 
   const current = TABS.find(t => t.id === tab);
@@ -91,13 +107,10 @@ export default function App() {
       {/* ── Offline banner ─────────────────────────────────────────────────── */}
       {apiStatus === 'offline' && (
         <div style={{
-          background: 'rgba(248,113,113,0.1)', borderBottom: '1px solid rgba(248,113,113,0.2)',
-          padding: '10px 24px', textAlign: 'center', color: '#f87171', fontSize: '0.85rem',
+          background: 'rgba(251,191,36,0.08)', borderBottom: '1px solid rgba(251,191,36,0.2)',
+          padding: '10px 24px', textAlign: 'center', color: '#fbbf24', fontSize: '0.85rem',
         }}>
-          ⚠️ Backend API is offline. Start it with:{' '}
-          <code style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 8px', borderRadius: 4 }}>
-            cd backend &amp;&amp; uvicorn main:app --reload
-          </code>
+          ⏳ Backend is waking up — this takes ~30 seconds on first visit. Features will work shortly.
         </div>
       )}
 
