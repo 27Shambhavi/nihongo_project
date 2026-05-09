@@ -1,4 +1,4 @@
-# 🇯🇵 Nihongo Project — AI-Powered JLPT Learning Platform
+# Nihongo Project — AI-Powered JLPT Learning Platform
 
 An AI-powered Japanese language learning platform designed for JLPT aspirants, integrating OCR, NLP, semantic analysis, and intelligent learning assistance into a unified interactive ecosystem.
 
